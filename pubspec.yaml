@@ -38,6 +38,9 @@ dependencies:
   # WebView package for displaying web content
   # https://pub.dev/packages/webview_flutter
   webview_flutter: ^4.13.0
+  # URL launcher for opening URLs in system browser or in-app browser
+  # https://pub.dev/packages/url_launcher
+  url_launcher: ^6.2.0
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
 
