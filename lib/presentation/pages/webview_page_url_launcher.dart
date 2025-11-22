@@ -23,26 +23,25 @@ class _WebViewPageUrlLauncherState extends State<WebViewPageUrlLauncher> {
     final uri = Uri.parse(AppConstants.baseUrl);
     
     try {
-      if (await canLaunchUrl(uri)) {
-        final launched = await launchUrl(
-          uri,
-          mode: LaunchMode.inAppWebView, // Opens in in-app browser (looks like app, but uses system browser)
-          webViewConfiguration: const WebViewConfiguration(
-            enableJavaScript: true,
-            enableDomStorage: true,
-          ),
-        );
-        
-        if (launched) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      } else {
+      if (!await canLaunchUrl(uri)) {
         setState(() {
           _isLoading = false;
         });
+        return;
       }
+      
+      await launchUrl(
+        uri,
+        mode: LaunchMode.inAppWebView,
+        webViewConfiguration: const WebViewConfiguration(
+          enableJavaScript: true,
+          enableDomStorage: true,
+        ),
+      );
+      
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _isLoading = false;

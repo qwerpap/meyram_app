@@ -62,37 +62,53 @@ class _WebViewContentState extends State<_WebViewContent> {
             cubit.setCurrentUrl(url);
             
             // CRITICAL: Mask WebView immediately when page starts loading
-            // This prevents site from detecting WebView and blocking content
-            if (Platform.isIOS) {
-              controller.runJavaScript('''
-                (function() {
-                  // Remove WebView detection immediately
-                  try {
-                    Object.defineProperty(navigator, 'standalone', {
-                      get: function() { return false; },
-                      configurable: true
-                    });
-                  } catch(e) {}
-                  
-                  try {
-                    Object.defineProperty(navigator, 'webdriver', {
-                      get: function() { return false; },
-                      configurable: true
-                    });
-                  } catch(e) {}
-                  
-                  // Make it look like Safari
-                  try {
-                    if (!navigator.vendor || navigator.vendor.indexOf('Apple') === -1) {
-                      Object.defineProperty(navigator, 'vendor', {
-                        get: function() { return 'Apple Computer, Inc.'; },
-                        configurable: true
-                      });
-                    }
-                  } catch(e) {}
-                })();
-              ''');
-            }
+            // Execute BEFORE site's JavaScript runs to prevent detection
+            controller.runJavaScript('''
+              (function() {
+                // Comprehensive WebView masking - execute immediately
+                try {
+                  // Remove all WebView detection properties
+                  Object.defineProperty(navigator, 'standalone', {
+                    get: function() { return false; },
+                    configurable: true,
+                    enumerable: false
+                  });
+                } catch(e) {}
+                
+                try {
+                  Object.defineProperty(navigator, 'webdriver', {
+                    get: function() { return false; },
+                    configurable: true,
+                    enumerable: false
+                  });
+                } catch(e) {}
+                
+                // Make it look like Safari
+                try {
+                  Object.defineProperty(navigator, 'vendor', {
+                    get: function() { return 'Apple Computer, Inc.'; },
+                    configurable: true
+                  });
+                } catch(e) {}
+                
+                // Remove any WebView-specific properties
+                try {
+                  if (window.webkit && window.webkit.messageHandlers) {
+                    delete window.webkit.messageHandlers;
+                  }
+                } catch(e) {}
+                
+                // Override any detection methods
+                try {
+                  const originalQuery = window.matchMedia;
+                  window.matchMedia = function(query) {
+                    const result = originalQuery.call(this, query);
+                    // Prevent detection through media queries
+                    return result;
+                  };
+                } catch(e) {}
+              })();
+            ''');
           },
           onPageFinished: (String url) async {
             cubit.onPageFinished(url);
